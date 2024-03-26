@@ -24,7 +24,7 @@ __Create Anki flashcards from all the words I look up on my Kindle__:
 
 ## Own solutions
 
-General usage:
+### General usage
 
 1. Make a local copy of the Kindle's `vocab.db` from `/Volumes/Kindle/system/vocabulary`.
 2. Refine the SQL query in `query.sql`.
@@ -35,13 +35,38 @@ General usage:
     - Preserve existing notes (do not overwrite or create duplicates)
     - Tag `kindle_vocab`, `incomplete` for later manipulation/deletion.
 
-### No translations
+### Queries
+
+My current favorit query:
+- no translations (see below)
+- group/deduplicate words with the same stem
+- but keep all contexts (including book and author)
+- format the word in question bold in the context
+
+```sql
+SELECT word, '(German translation: missing)' AS German_Translation, usages
+FROM (
+    SELECT
+        MIN(WORDS.word) OVER(PARTITION BY WORDS.stem) as word, -- Select the first word for each stem
+        GROUP_CONCAT('"' || REPLACE(RTRIM(LOOKUPS.usage), WORDS.word, '<b>' || WORDS.word || '</b>') || '" (' || BOOK_INFO.authors || ': ' || BOOK_INFO.title || ')', '<br>') OVER(PARTITION BY WORDS.stem) as usages, -- Concatenate all usages for the same stem
+        ROW_NUMBER() OVER(PARTITION BY WORDS.stem ORDER BY LOOKUPS.timestamp) as rn -- For selecting the first row per stem group
+    FROM LOOKUPS
+    LEFT JOIN WORDS ON WORDS.id = LOOKUPS.word_key
+    LEFT JOIN BOOK_INFO ON BOOK_INFO.id = LOOKUPS.book_key
+    WHERE WORDS.lang = 'en'
+) WHERE rn = 1
+ORDER BY word;
+```
+
+### Translations
+
+#### Translate when learning
 
 This creates flashcards where the German translations are missing. That's actually not bad (for me): When I learn a word for the first (or second, after looking it up) time, I want to spend a bit of effort. So whenever the card is scheduled for the first time, I will:
 1. Screen the card if I still want to learn it (exlcusion causes can be: too simple, too rare).
 2. Look at the context and try to figure out the translation myself.
 3. Add the correct German translation(s).
 
-### ChatGPT translations
+#### ChatGPT translations
 
 I used ChatGPT for custom context and translation. Quality is great, and it understands the format. However, it does only 50–100 words at a time, which is slow. Might be an option for updates after short intervals, but not for a big vocab dump (~2000 words).

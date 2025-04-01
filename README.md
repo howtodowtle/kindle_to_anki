@@ -63,20 +63,16 @@ clemency|(German translation: missing)|"When, on 8 June, the inevitable death se
 #### Translate when learning
 
 This creates flashcards where the German translations are missing. That's actually not bad (for me): When I learn a word for the first (or second, after looking it up) time, I want to spend a bit of effort. So whenever the card is scheduled for the first time, I will:
-1. Screen the card if I still want to learn it (exlcusion causes can be: too simple, too rare).
+1. Screen the card if I still want to learn it (exclusion causes can be: already know/too simple, too obscure).
 2. Look at the context and try to figure out the translation myself.
-3. Add the correct German translation(s).
-
-#### ChatGPT translations
-
-I initially used ChatGPT for custom context and translation. Quality is great, and it understands the format. However, it does only 50–100 words at a time, which is slow. Might be an option for updates after short intervals, but not for a big vocab dump (~2000–4000 words). Also, I prefer the true context from the books to new context: It triggers connections and (potentially) emotions, which help learning.
+3. Add the correct German translation(s) using a dictionary or LLM (I have my custom Claude project that gives me really good example sentences.)
 
 #### Automatic translations
 
 Options:
 - DeepL
 - Google Translate
-- GPT-4
+- LLMs
 
 Advantage:
 - automatic

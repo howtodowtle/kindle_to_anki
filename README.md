@@ -16,21 +16,33 @@ _NB: This is a personal collection of thoughts, including my personal recipe/alg
 1. Make a local copy of the Kindle's `vocab.db`.
     - **Older Kindles** mount as `/Volumes/Kindle` — copy from `/Volumes/Kindle/system/vocabulary/vocab.db`.
     - **Newer Kindles** (Paperwhite 2022+, Scribe, Colorsoft) use MTP and do **not** show up in `/Volumes/` on macOS. Install [openMTP](https://openmtp.ganeshrvel.com/) (or Android File Transfer), quit Calibre first (it takes exclusive USB ownership), then drag `system/vocabulary/vocab.db` onto your Mac.
-2. Write or refine a SQL query (in `./queries`). Per-language queries: filter on `WHERE WORDS.lang = 'xx'` (e.g., `'en'`, `'ca'`). Confirm available codes with `sqlite3 vocab.db "SELECT DISTINCT lang FROM WORDS;"`.
-3. Run the query on the database using `sqlite3` (preinstalled on Macs): `sqlite3 -separator "|" path_to_local_db.db < path_to_query.sql > path_to_output.csv`
+2. Drop the DB into `vocab_dbs/` (any filename — the script picks the newest).
+3. Run the importer:
+    ```
+    ./import.sh <lang>          # e.g., ./import.sh ca
+    ./import.sh <lang> <db>     # explicit DB path
+    ```
+    This reads the last-import date from `last_imports.txt` and exports only words looked up since then to `output/kindle_vocab_<lang>_dedup_<YYYY_MM_DD>.csv`. Language codes match `queries/query_<lang>.sql` (`en`, `ca`, …). Check available codes in a DB with `sqlite3 vocab.db "SELECT DISTINCT lang FROM WORDS;"`.
 4. Import into Anki:
     - Separator: Pipe (any separator is fine; I chose | because it is unlikely to appear in context)
     - Allow HTML
     - Preserve existing notes (do not overwrite or create duplicates)
     - Tag `kindle_vocab`, `incomplete` for later manipulation/deletion.
+5. Record the import:
+    ```
+    ./mark_imported.sh <lang>            # sets today's date in last_imports.txt
+    ./mark_imported.sh <lang> YYYY-MM-DD # explicit date
+    ```
+    Subsequent `./import.sh` runs will filter out everything older than this date.
 
 ### Queries
 
-My current query (`queries/query.sql` for English, `queries/query_ca.sql` for Catalan — same shape, different `lang` filter and translation hint):
+My current query (`queries/query_en.sql` for English, `queries/query_ca.sql` for Catalan — same shape, different `lang` filter and translation hint):
 - no translations (will be added later, see below)
 - groups/deduplicates words with the same stem
 - but keeps all contexts (including book, author, and the lookup date)
 - formats the word in question bold where it appears in the context
+- filters by `LOOKUPS.timestamp >= strftime('%s', '{{SINCE}}') * 1000`; `{{SINCE}}` is substituted at run time from `last_imports.txt`
 
 ```sql
 SELECT word, '(German translation: missing)' AS German_Translation, usages
@@ -48,13 +60,14 @@ FROM (
     LEFT JOIN WORDS ON WORDS.id = LOOKUPS.word_key
     LEFT JOIN BOOK_INFO ON BOOK_INFO.id = LOOKUPS.book_key
     WHERE WORDS.lang = 'en'
+      AND LOOKUPS.timestamp >= strftime('%s', '{{SINCE}}') * 1000
 ) WHERE rn = 1
 ORDER BY word;
 ```
 
-Example command: `sqlite3 -separator "|" vocab_dbs/kindle_vocab_2024_03_26.db < queries/query.sql > output/kindle_vocab_en_dedup_2024_03_26.csv`
+Typical invocation: `./import.sh en` (or `./import.sh ca`). Under the hood this runs:
 
-Catalan equivalent: `sqlite3 -separator "|" vocab_dbs/vocab_2026_04_19.db < queries/query_ca.sql > output/kindle_vocab_ca_dedup_2026_04_19.csv`
+`sed "s/{{SINCE}}/<date-from-last_imports.txt>/g" queries/query_<lang>.sql | sqlite3 -separator "|" vocab_dbs/<newest>.db > output/kindle_vocab_<lang>_dedup_<YYYY_MM_DD>.csv`
 
 Example output (see multiple contexts):
 

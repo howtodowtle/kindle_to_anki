@@ -11,6 +11,7 @@ This is a SQLite database. We can access it using `sqlite3` which is preinstalle
 The db has six tables, of which 1–2 are interesting for us: WORDS, and maybe LOOKUPS.
 Get whatever you need: all the words; all the words looked up at least twice, etc. (queries: in extra)
 Filter by language via `WHERE WORDS.lang = 'xx'` (e.g., 'en', 'ca', 'de'). Check with `SELECT DISTINCT lang FROM WORDS;`.
+Shortcut now in this repo: `./import.sh <lang>` → only new words since the date in `last_imports.txt`. After importing to Anki, run `./mark_imported.sh <lang>` to bump the date to today.
 Translations:
 Either: Use ChatGPT to create translations and example sentences. Store in a csv file.
 Or: Leave blank and fill in when studying for the first time.

@@ -13,5 +13,6 @@ FROM (
     LEFT JOIN WORDS ON WORDS.id = LOOKUPS.word_key
     LEFT JOIN BOOK_INFO ON BOOK_INFO.id = LOOKUPS.book_key
     WHERE WORDS.lang = 'ca'
+      AND LOOKUPS.timestamp >= strftime('%s', '{{SINCE}}') * 1000
 ) WHERE rn = 1
 ORDER BY word;

@@ -13,8 +13,10 @@ _NB: This is a personal collection of thoughts, including my personal recipe/alg
 
 ### General usage
 
-1. Make a local copy of the Kindle's `vocab.db` from `/Volumes/Kindle/system/vocabulary`.
-2. Write or refine a SQL query (in `./queries`).
+1. Make a local copy of the Kindle's `vocab.db`.
+    - **Older Kindles** mount as `/Volumes/Kindle` — copy from `/Volumes/Kindle/system/vocabulary/vocab.db`.
+    - **Newer Kindles** (Paperwhite 2022+, Scribe, Colorsoft) use MTP and do **not** show up in `/Volumes/` on macOS. Install [openMTP](https://openmtp.ganeshrvel.com/) (or Android File Transfer), quit Calibre first (it takes exclusive USB ownership), then drag `system/vocabulary/vocab.db` onto your Mac.
+2. Write or refine a SQL query (in `./queries`). Per-language queries: filter on `WHERE WORDS.lang = 'xx'` (e.g., `'en'`, `'ca'`). Confirm available codes with `sqlite3 vocab.db "SELECT DISTINCT lang FROM WORDS;"`.
 3. Run the query on the database using `sqlite3` (preinstalled on Macs): `sqlite3 -separator "|" path_to_local_db.db < path_to_query.sql > path_to_output.csv`
 4. Import into Anki:
     - Separator: Pipe (any separator is fine; I chose | because it is unlikely to appear in context)
@@ -24,7 +26,7 @@ _NB: This is a personal collection of thoughts, including my personal recipe/alg
 
 ### Queries
 
-My current query:
+My current query (`queries/query.sql` for English, `queries/query_ca.sql` for Catalan — same shape, different `lang` filter and translation hint):
 - no translations (will be added later, see below)
 - groups/deduplicates words with the same stem
 - but keeps all contexts (including book, author, and the lookup date)
@@ -51,6 +53,8 @@ ORDER BY word;
 ```
 
 Example command: `sqlite3 -separator "|" vocab_dbs/kindle_vocab_2024_03_26.db < queries/query.sql > output/kindle_vocab_en_dedup_2024_03_26.csv`
+
+Catalan equivalent: `sqlite3 -separator "|" vocab_dbs/vocab_2026_04_19.db < queries/query_ca.sql > output/kindle_vocab_ca_dedup_2026_04_19.csv`
 
 Example output (see multiple contexts):
 
